@@ -1,5 +1,11 @@
-variable "container_name" {
-  description = "Value of the name for the Docker container"
-  type        = string
-  default     = "ExampleNginxContainer"
+variable "project" {}
+
+variable "credentials_file" {}
+
+variable "region" {
+  default = "us-central1"
+}
+
+variable "zone" {
+  default = "us-central1-c"
 }

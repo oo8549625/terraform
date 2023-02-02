@@ -1,24 +1,38 @@
 terraform {
   required_providers {
-    docker = {
-      source  = "kreuzwerker/docker"
-      version = "~> 2.13.0"
+    google = {
+      source  = "hashicorp/google"
+      version = "4.51.0"
     }
   }
 }
 
-provider "docker" {}
+provider "google" {
+  credentials = file(var.credentials_file)
 
-resource "docker_image" "nginx" {
-  name         = "nginx:latest"
-  keep_locally = false
+  project = var.project
+  region  = var.region
+  zone    = var.zone
 }
 
-resource "docker_container" "nginx" {
-  image = docker_image.nginx.latest
-  name  = var.container_name
-  ports {
-    internal = 80
-    external = 8080
+resource "google_compute_network" "vpc_network" {
+  name = "terraform-network"
+}
+
+resource "google_compute_instance" "vm_instance" {
+  name         = "terraform-instance"
+  machine_type = "e2-micro"
+  tags         = ["web", "dev"]
+
+  boot_disk {
+    initialize_params {
+      image = "cos-cloud/cos-stable"
+    }
+  }
+
+  network_interface {
+    network = google_compute_network.vpc_network.name
+    access_config {
+    }
   }
 }
