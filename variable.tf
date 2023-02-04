@@ -1,4 +1,6 @@
-variable "project" {}
+variable "project" {
+  description = "project id"
+}
 
 variable "credentials_file" {}
 

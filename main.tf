@@ -9,30 +9,54 @@ terraform {
 
 provider "google" {
   credentials = file(var.credentials_file)
-
   project = var.project
   region  = var.region
   zone    = var.zone
+}
+
+resource "google_service_account" "sa" {
+  account_id = "gke-cluster-sa"
 }
 
 resource "google_compute_network" "vpc_network" {
   name = "terraform-network"
 }
 
-resource "google_compute_instance" "vm_instance" {
-  name         = "terraform-instance"
-  machine_type = "e2-micro"
-  tags         = ["web", "dev"]
+resource "google_compute_subnetwork" "subnetwork" {
+  name          = "terraform-subnetwork"
+  ip_cidr_range = "10.0.0.0/16"
+  region        = var.region
+  network       = google_compute_network.vpc_network.name
+}
 
-  boot_disk {
-    initialize_params {
-      image = "cos-cloud/cos-stable"
-    }
+resource "google_container_cluster" "cluster" {
+  name               = "gke-cluster"
+  location           = var.region
+  initial_node_count = 1
+  min_master_version = "1.25.4"
+  subnetwork         = google_compute_subnetwork.subnetwork.name
+  network            = google_compute_network.vpc_network.name
+
+  node_config {
+    machine_type = "e2-small"
+    service_account = google_service_account.sa.email
+    oauth_scopes    = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
   }
+}
 
-  network_interface {
-    network = google_compute_network.vpc_network.name
-    access_config {
-    }
+resource "google_container_node_pool" "primary_preemptible_nodes" {
+  name       = "terraform-node-pool"
+  cluster    = google_container_cluster.cluster.id
+  node_count = 3
+
+  node_config {
+    preemptible  = true
+    machine_type = "e2-small"
+    service_account = google_service_account.sa.email
+    oauth_scopes    = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
   }
 }
