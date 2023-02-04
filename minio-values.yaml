@@ -1,0 +1,6 @@
+auth:
+  rootUser: admin
+  rootPassword: pn6Cbkecr3
+  forcePassword: true
+service:
+  type: LoadBalancer
