@@ -11,3 +11,7 @@ variable "region" {
 variable "zone" {
   default = "us-central1-c"
 }
+
+variable "kubeconfig_path" {
+  default = "~/.kube/config"
+}
